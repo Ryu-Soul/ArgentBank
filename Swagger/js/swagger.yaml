@@ -1,0 +1,273 @@
+openapi: 3.0.0
+info:
+  title: Argent Bank - Transactions API (Proposition)
+  version: 1.0.0
+  description: >
+    Proposition de routes API pour la gestion des transactions :
+      - Visualisation des transactions d’un compte
+      - Visualisation d’une transaction individuelle
+      - Modification d’informations d’une transaction
+      - Ajout ou suppression d'informations associées (pas de suppression/ajout de transaction elle-même)
+
+servers:
+  - url: http://localhost:3001/api/v2
+
+tags:
+  - name: Transactions
+    description: Gestion des transactions bancaires
+
+components:
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - Bearer: []
+
+paths:
+
+  /accounts/{accountId}/transactions:
+    get:
+      tags:
+        - Transactions
+      summary: Liste des transactions du mois en cours pour un compte
+      description: >
+        Retourne toutes les transactions du compte pour le mois courant.
+      parameters:
+
+        - name: accountId
+          in: path
+          required: true
+          description: ID du compte bancaire
+          schema:
+            type: string
+
+        - name: month
+          in: query
+          required: false
+          description: Mois choisi (format MM-YYYY), défaut = mois courant
+          schema:
+            type: string
+            example: "2025-12"
+
+      responses:
+        '200':
+          description: Transactions récupérées avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: ok
+                  body:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Compte introuvable
+        '500':
+          description: Erreur interne
+
+  /accounts/{accountId}/transactions/{transactionId}:
+    get:
+      tags:
+        - Transactions
+      summary: Détails d’une transaction
+      description: >
+        Retourne les informations complètes d’une transaction spécifique.
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          description: ID du compte bancaire
+          schema:
+            type: string
+
+        - name: transactionId
+          in: path
+          required: true
+          description: ID de la transaction
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Transaction trouvée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: ok
+                  body:
+                    $ref: '#/components/schemas/TransactionDetails'
+        '404':
+          description: Transaction introuvable
+        '500':
+          description: Erreur interne
+
+  /accounts/{accountId}/transactions/{transactionId}/category:
+    patch:
+      tags:
+        - Transactions
+      summary: Mettre à jour la catégorie d’une transaction
+      description: >
+        Change uniquement la catégorie d’une transaction.
+      parameters:
+
+        - in: path
+          name: accountId
+          required: true
+          schema:
+            type: string
+
+        - in: path
+          name: transactionId
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                category:
+                  type: string
+                  example: "Courses"
+
+      responses:
+        '200':
+          description: Catégorie mise à jour
+        '404':
+          description: Transaction introuvable
+        '500':
+          description: Erreur interne
+
+  /accounts/{accountId}/transactions/{transactionId}/notes:
+    patch:
+      tags:
+        - Transactions
+      summary: Mettre à jour la note d’une transaction
+      description: >
+        Modifie uniquement la note associée à la transaction.
+      parameters:
+
+        - in: path
+          name: accountId
+          required: true
+          schema:
+            type: string
+
+        - in: path
+          name: transactionId
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  example: "Cadeau d’anniversaire pour Anna"
+
+      responses:
+        '200':
+          description: Notes mises à jour
+        '404':
+          description: Transaction introuvable
+        '500':
+          description: Erreur interne
+
+  /accounts/{accountId}/virement:
+
+    post:
+      tags:
+        - Virement
+      summary: Envoyer de l'argent vers un autre compte
+      description: >
+        Crée un virement depuis le compte source vers un autre compte interne.
+        Le virement génère automatiquement une ou plusieurs transactions.
+      parameters:
+        - in: path
+          name: accountId
+          required: true
+          description: Compte source
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetAccountId
+                - amount
+              properties:
+                targetAccountId:
+                  type: string
+                  description: ID du compte destinataire
+                  example: "acc_987654"
+                amount:
+                  type: number
+                  format: float
+                  example: 120.50
+                currency:
+                  type: string
+                  example: "EUR"
+                label:
+                  type: string
+                  example: "Remboursement dîner"
+                executionDate:
+                  type: string
+                  format: date
+                  example: "2025-12-10"
+
+      responses:
+        '201':
+          description: Virement créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 0
+                  message:
+                    type: string
+                    example: "transfer_created"
+                  body:
+                    $ref: '#/components/schemas/Transfer'
+        '400':
+          description: Fonds insuffisants ou données invalides
+        '401':
+          description: Unauthorized
+        '404':
+          description: Compte source ou cible introuvable
+        '500':
+          description: Erreur interne
+

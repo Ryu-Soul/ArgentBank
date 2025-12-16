@@ -34,7 +34,7 @@ export default function User() {
   }, [profile]);
 
   const handleSave = () => {
-    // adapte la payload à ce que ton changeUserName attend côté backend
+    // adapte la payload à ce que le changeUserName attend côté backend
     if  (userName !== '') {
       
       dispatch(changeUserName({ token, userName }));

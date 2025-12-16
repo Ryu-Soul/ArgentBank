@@ -12,7 +12,7 @@ export const Userdata = [
         button : "View transactions"
     },
     {
-        tilte : "Argent Bank Credit Card (x8349)",
+        title : "Argent Bank Credit Card (x8349)",
         amount : "$184.30",
         description : "Current Balance",
         button : "View transactions"
